@@ -9,7 +9,7 @@ Options:
     -h, --help          Show brief usage summary.
     -q, --quiet         Reduce logging verbosity.
 
-    --ip=IP             Address to bind host port to. [default: 0.0.0.0]
+    --ip=IP             Address to bind host port to. [default: localhost]
 
     --user=USER         Username inside container.
     --uid=UID           User id inside container.
@@ -76,6 +76,16 @@ def _main():
         for v in volumes
     )
 
+    # Add .ssh directory as ro mount if present
+    ssh_dir = os.path.expanduser('~/.ssh/')
+    if os.path.isdir(ssh_dir):
+        volumes.append(ssh_dir)
+        binds[ssh_dir] = {
+            'bind': '/ssh/{}'.format(user),
+            'mode': 'ro'
+        }
+        logging.info('Adding .ssh bind: %s', binds[ssh_dir])
+
     logging.info('Volumes: %s', ', '.join(volumes))
     logging.info('Binds: %s', ', '.join(
         '{} => {}'.format(k, v) for k, v in binds.items()
@@ -110,6 +120,9 @@ def _main():
                 '/bin/bash', '-c',
                 '''
                     mkdir -p ~/notebooks/data &&
+                    if [ -d "/ssh/${USER}" ]; then
+                        ln -s "/ssh/${USER}" ~/.ssh;
+                    fi &&
                     for d in /volumes/*; do
                         ln -s "${d}" ~/notebooks/data/"$(basename "${d}")"
                     done
@@ -130,9 +143,7 @@ def _main():
     for u in urls:
         print(' - ' + u)
 
-    print('Container name: ' +  ctr_name)
-
-    print('Kill *AND DELETE* using command:')
+    print('Kill *AND DELETE* container using command:')
     print('docker rm -f ' + ctr_name)
 
     return 0 # SUCCESS
