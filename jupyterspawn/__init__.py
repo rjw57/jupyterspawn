@@ -15,7 +15,7 @@ Options:
     --uid=UID           User id inside container.
 
     <volumedir>         Each directory in <volumedir> will appear in
-                        /data/ with the same basename.
+                        ~/notebooks/ with the same basename.
 
 """
 import getpass
@@ -65,14 +65,15 @@ def _main():
     )
 
     def ctr_vol_name(v):
-        return '/data/{}'.format(os.path.basename(os.path.abspath(v)))
+        return '/volumes/{}'.format(
+            os.path.basename(os.path.abspath(v))
+        )
 
     # Construct bind mounts
-    volumes = [ctr_vol_name(v) for v in opts['<volumedir>']
-    ]
+    volumes = opts['<volumedir>']
     binds = dict(
-        (ctr_vol_name(v), { 'bind': v, 'mode': 'rw' })
-        for v in opts['<volumedir>']
+        (v, { 'bind': ctr_vol_name(v), 'mode': 'rw' })
+        for v in volumes
     )
 
     logging.info('Volumes: %s', ', '.join(volumes))
@@ -109,7 +110,7 @@ def _main():
                 '/bin/bash', '-c',
                 '''
                     mkdir -p ~/notebooks/data &&
-                    for d in /data/*; do
+                    for d in /volumes/*; do
                         ln -s "${d}" ~/notebooks/data/"$(basename "${d}")"
                     done
                 ''',
