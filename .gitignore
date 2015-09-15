@@ -1,3 +1,4 @@
 # Cached Python bytecode
 *.pyc
 __pycache__
+*.egg-info
