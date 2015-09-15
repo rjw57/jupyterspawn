@@ -1,9 +1,0 @@
-README.rst
-jupyterspawn/__init__.py
-jupyterspawn/__main__.py
-jupyterspawn.egg-info/PKG-INFO
-jupyterspawn.egg-info/SOURCES.txt
-jupyterspawn.egg-info/dependency_links.txt
-jupyterspawn.egg-info/entry_points.txt
-jupyterspawn.egg-info/requires.txt
-jupyterspawn.egg-info/top_level.txt

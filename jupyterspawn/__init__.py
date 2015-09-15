@@ -14,6 +14,10 @@ Options:
     --user=USER         Username inside container.
     --uid=UID           User id inside container.
 
+    -i,--image=NAME     Launch container from image named NAME.
+                        [default: docker.io/rjw57/jupyter]
+    --no-pull           Do not attempt to pull image if it is not present.
+
     <volumedir>         Each directory in <volumedir> will appear in
                         ~/notebooks/ with the same basename.
 
@@ -27,8 +31,6 @@ import time
 
 import docopt
 import docker
-
-CONTAINER_IMAGE_REPO='rjw57/jupyter'
 
 def main():
     sys.exit(_main())
@@ -49,14 +51,16 @@ def _main():
     # Create a new Docker client
     c = docker.Client()
 
+    container_image_name = opts['--image']
+
     # Check for a downloaded container image
-    imgs = c.images(CONTAINER_IMAGE_REPO)
+    imgs = c.images(container_image_name)
+    if len(imgs) == 0 and not opts['--no-pull']:
+        logging.info('Pulling %s...', container_image_name)
+        c.pull(container_image_name)
+        imgs = c.images(container_image_name)
     if len(imgs) == 0:
-        logging.info('Pulling %s...', CONTAINER_IMAGE_REPO)
-        c.pull(CONTAINER_IMAGE_REPO)
-        imgs = c.images(CONTAINER_IMAGE_REPO)
-    if len(imgs) == 0:
-        logging.error('No image from repo %s found', CONTAINER_IMAGE_REPO)
+        logging.error('No image from repo %s found', container_image_name)
         return 1
 
     img = imgs[0]
@@ -93,7 +97,7 @@ def _main():
 
     # Create a container from the image and start it
     ctr = c.create_container(
-        image=CONTAINER_IMAGE_REPO, ports=[8888],
+        image=container_image_name, ports=[8888],
         environment={'USER': user, 'USER_UID': uid},
         hostname='{}-compute'.format(user),
         volumes=volumes,
